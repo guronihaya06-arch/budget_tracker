@@ -1,0 +1,503 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<meta name="theme-color" content="#9d88d9">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+</head><body>
+<title>Budget & Expense Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<style>
+/* Layout: one soft column, sticky header, bottom tab bar, rounded cards. */
+:root{--bg:#faf6f4;--card:#ffffff;--fg:#3b3747;--muted:#8d8799;--accent:#9d88d9;--accent-ink:#ffffff;--soft:#f0ebfb;--line:#eee9f1;--danger:#e07a90;--shadow:0 2px 14px rgba(80,60,110,.07);color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1e1c25;--card:#2a2735;--fg:#ece9f3;--muted:#9c97aa;--accent:#b7a3f0;--accent-ink:#1e1c25;--soft:#383350;--line:#3a3648;--danger:#f08fa0;--shadow:0 2px 14px rgba(0,0,0,.3);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1e1c25;--card:#2a2735;--fg:#ece9f3;--muted:#9c97aa;--accent:#b7a3f0;--accent-ink:#1e1c25;--soft:#383350;--line:#3a3648;--danger:#f08fa0;--shadow:0 2px 14px rgba(0,0,0,.3);color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:500 14px/1.45 Nunito,system-ui,sans-serif;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+#app{max-width:560px;margin:0 auto;min-height:100%}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:14px 0 10px;z-index:5}
+h1{font-size:24px;margin:0;font-weight:800}
+h3{margin:0 0 12px;font-size:18px}
+main{padding-bottom:16px}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px;min-width:0}
+.hero .big{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;margin:4px 0 14px}
+.row{display:flex;align-items:center;gap:10px;min-width:0}
+.between{justify-content:space-between}
+.end{justify-content:flex-end}
+.grow{flex:1;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:12px;color:var(--muted);font-weight:700}
+input,select,textarea{font:inherit;font-weight:600;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:11px 12px;width:100%;min-width:0}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:800;border:0;border-radius:14px;padding:11px 16px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn.ghost{background:var(--soft);color:var(--fg)}
+.btn.danger{background:var(--danger);color:#fff}
+.btn.block{width:100%}
+.link{background:none;border:0;color:var(--accent);font:inherit;font-weight:800;cursor:pointer;padding:4px}
+.icon-btn{background:var(--soft);border:0;border-radius:12px;width:34px;height:34px;cursor:pointer;font-size:15px;flex:0 0 auto}
+.ico{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
+.meta{flex:1;min-width:0}
+.meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.amt{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.li{display:flex;align-items:center;gap:10px;padding:10px 0;min-width:0}
+.li+.li,.hrow+.hrow{border-top:1px solid var(--line)}
+.dayhead{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;font-weight:800;margin:14px 0 0;text-transform:uppercase;letter-spacing:.04em}
+.hrow{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;color:var(--fg);font:inherit;text-align:left;padding:12px 0;cursor:pointer;min-width:0}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.empty{text-align:center;padding:24px 12px;color:var(--muted)}
+.empty b{display:block;font-size:30px;margin-bottom:6px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cal .dow{text-align:center;font-size:11px;color:var(--muted);font-weight:800;padding:4px 0}
+.cal button{background:var(--bg);border:1px solid transparent;border-radius:12px;min-height:52px;padding:4px 2px;font:inherit;color:var(--fg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.cal button.sel{border-color:var(--accent);background:var(--soft)}
+.cal button.today b{color:var(--accent)}
+.cal small{font-size:9.5px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;max-width:100%;text-overflow:ellipsis}
+.iconpick{display:flex;flex-wrap:wrap;gap:6px}
+.ic{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--bg);font-size:18px;cursor:pointer}
+.ic.on{border-color:var(--accent);background:var(--soft)}
+.donut{width:140px;height:140px;border-radius:50%;position:relative;flex:0 0 auto}
+.donut::after{content:"";position:absolute;inset:26%;background:var(--card);border-radius:50%}
+.cols{display:flex;align-items:flex-end;gap:6px;height:130px;margin-top:12px}
+.cols>div{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;font-size:10px;color:var(--muted);font-weight:700}
+.cols small{font-size:9px;white-space:nowrap}
+.cols i{display:block;width:100%;max-width:28px;background:var(--accent);border-radius:8px 8px 4px 4px}
+.nav-arrows{display:flex;align-items:center;justify-content:space-between;gap:8px}
+nav{position:sticky;bottom:0;display:flex;overflow-x:auto;gap:4px;background:var(--card);border-radius:20px 20px 0 0;box-shadow:var(--shadow);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));z-index:5}
+nav button{flex:1 0 auto;min-width:58px;background:none;border:0;color:var(--muted);font:inherit;font-size:11px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;cursor:pointer;border-radius:12px}
+nav button span{font-size:18px}
+nav button.on{color:var(--accent);background:var(--soft)}
+.scrim{position:fixed;inset:0;background:rgba(20,15,30,.4);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:16px}
+.sheet{background:var(--card);border-radius:24px;padding:20px;width:100%;max-width:440px;max-height:90vh;overflow:auto;box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:700;z-index:30;max-width:88%;text-align:center}
+</style>
+
+<div id="app"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+const KEY='budget-tracker-v1';
+const ICONS=['🍔','🛍️','🏠','🚗','💊','💰','🚨','🎮','☕','🎁','📚','👕','🐶','✈️','💡','📱','🎓','🧾'];
+const DEFAULT_CATS=[['Food & Drinks','🍔'],['Shopping','🛍️'],['Monthly Bills','🏠'],['Transportation','🚗'],['Health','💊'],['Savings','💰'],['Emergency Funds','🚨'],['Entertainment','🎮']];
+const COLORS=['#f6c6d0','#cfe8d8','#c9d8f5','#f7e3b0','#dcd0f3','#f5d3c0','#bfe5e6','#e8d5c4','#f3c9e6','#d4e7b5'];
+const ALL=['0000-00-00','9999-12-31'];
+const TITLES={home:'Home',tx:'Transactions',cal:'Calendar',cats:'Categories',an:'Analytics',hist:'History',set:'Settings'};
+const VIEWS=[['home','🏠','Home'],['tx','🧾','Expenses'],['cal','📅','Calendar'],['cats','🗂️','Categories'],['an','📊','Analytics'],['hist','🗃️','History'],['set','⚙️','Settings']];
+
+/* ---------- helpers (function declarations, safe to call early) ---------- */
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function pad(n){return String(n).padStart(2,'0')}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function todayStr(){return ymd(new Date())}
+function parseYmd(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
+function addDays(s,n){const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)}
+function monthOf(s){return s.slice(0,7)}
+function shiftMonth(m,n){const[y,mo]=m.split('-').map(Number);return ymd(new Date(y,mo-1+n,1)).slice(0,7)}
+function monthRange(m){const a=m+'-01';const d=parseYmd(a);d.setMonth(d.getMonth()+1);d.setDate(0);return[a,ymd(d)]}
+function weekRange(s){const off=(parseYmd(s).getDay()+6)%7;const a=addDays(s,-off);return[a,addDays(a,6)]}
+function niceDate(s){return parseYmd(s).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}
+function shortDate(s){return parseYmd(s).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+function monthName(m){const[y,mo]=m.split('-').map(Number);return new Date(y,mo-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}
+function r2(n){return Math.round((+n||0)*100)/100}
+function money(n){const v=r2(n);return (v<0?'−':'')+db.currency+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function compact(n){return db.currency+(n>=1000?(n/1000).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(n)))}
+function readAmount(v){const n=r2(parseFloat(v));return n>0?n:0}
+function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36)}
+function byDateDesc(a,b){return b.date.localeCompare(a.date)}
+
+/* ---------- storage ---------- */
+function defaults(){return{currency:'₱',startBalance:0,limits:{daily:0,weekly:0,monthly:0},categories:DEFAULT_CATS.map(([name,icon],i)=>({id:'c'+i,name,icon,budget:0})),txns:[],incomes:[]}}
+function load(){try{const raw=localStorage.getItem(KEY);if(raw)return Object.assign(defaults(),JSON.parse(raw))}catch(e){}return defaults()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Could not save on this device')}}
+let db=load();
+const ui={view:'home',selDate:todayStr(),calMonth:monthOf(todayStr()),anMonth:monthOf(todayStr()),histMonth:null};
+
+/* ---------- queries (always computed from data, so nothing is duplicated) ---------- */
+function sumT(a,b){return r2(db.txns.reduce((s,t)=>t.date>=a&&t.date<=b?s+t.amount:s,0))}
+function sumI(a,b){return r2(db.incomes.reduce((s,t)=>t.date>=a&&t.date<=b?s+t.amount:s,0))}
+function txnsIn(a,b){return db.txns.filter(t=>t.date>=a&&t.date<=b)}
+function balanceAll(){return r2(db.startBalance+sumI(...ALL)-sumT(...ALL))}
+function catById(id){return db.categories.find(c=>c.id===id)||{id,name:'Removed category',icon:'❔',budget:0}}
+function catColor(id){const i=db.categories.findIndex(c=>c.id===id);return COLORS[(i<0?0:i)%COLORS.length]}
+function catSpent(id,a,b){return r2(txnsIn(a,b).filter(t=>t.categoryId===id).reduce((s,t)=>s+t.amount,0))}
+function catTotals(a,b){const map={};txnsIn(a,b).forEach(t=>{map[t.categoryId]=r2((map[t.categoryId]||0)+t.amount)});return Object.keys(map).map(id=>({id,c:catById(id),v:map[id]})).sort((x,y)=>y.v-x.v)}
+function allMonths(){const s=new Set([monthOf(todayStr())]);db.txns.forEach(t=>s.add(monthOf(t.date)));db.incomes.forEach(t=>s.add(monthOf(t.date)));return[...s].sort().reverse()}
+function monthWeeks(m){const[a,b]=monthRange(m);const out=[];let ws=weekRange(a)[0],n=1;while(ws<=b){const we=addDays(ws,6);const s1=ws<a?a:ws;const e1=we>b?b:we;out.push({tag:'W'+n++,label:shortDate(s1)+' – '+shortDate(e1),v:sumT(s1,e1)});ws=addDays(ws,7)}return out}
+
+/* ---------- small UI pieces ---------- */
+function empty(icon,title,sub){return `<div class="empty"><b>${icon}</b><div style="font-weight:800;color:var(--fg)">${title}</div><div class="small">${sub||''}</div></div>`}
+function limitBlock(label,spent,limit){
+  if(!(limit>0))return `<div class="row between small"><span class="muted">${label}</span><span class="muted">not set</span></div>`;
+  const p=Math.min(100,spent/limit*100),over=spent>limit;
+  return `<div class="row between small"><span>${label}</span><span style="${over?'color:var(--danger)':'color:var(--muted)'}">${over?'Over by '+money(spent-limit):money(limit-spent)+' left'}</span></div><div class="bar"><i style="width:${p.toFixed(1)}%;${over?'background:var(--danger)':''}"></i></div>`;
+}
+function txRow(t){const c=catById(t.categoryId);return `<div class="li"><div class="ico" style="background:${catColor(c.id)}">${esc(c.icon)}</div><div class="meta"><b>${esc(t.note||c.name)}</b><span class="small muted">${esc(c.name)}</span></div><span class="amt">${money(t.amount)}</span><button class="icon-btn" data-act="edit" data-id="${t.id}" aria-label="Edit">✏️</button><button class="icon-btn" data-act="del" data-id="${t.id}" aria-label="Delete">🗑️</button></div>`}
+function catOptions(sel){return db.categories.map(c=>`<option value="${c.id}" ${c.id===sel?'selected':''}>${esc(c.icon)} ${esc(c.name)}</option>`).join('')}
+function bars(items){const max=Math.max(1,...items.map(x=>x.v));return `<div class="cols">${items.map(x=>`<div title="${esc(x.label)}: ${money(x.v)}"><small>${x.v?compact(x.v):''}</small><i style="height:${Math.round(x.v/max*90)}px"></i><span>${esc(x.tag)}</span></div>`).join('')}</div>`}
+
+/* ---------- views ---------- */
+function vHome(){
+  const t=todayStr(),m=monthOf(t),[ma,mb]=monthRange(m),[wa,wb]=weekRange(t);
+  const spentM=sumT(ma,mb),incM=sumI(ma,mb),recent=db.txns.slice().sort(byDateDesc).slice(0,5);
+  return `
+  <section class="card hero">
+    <div class="small muted">Current balance</div>
+    <div class="big">${money(balanceAll())}</div>
+    <div class="grid2">
+      <div><div class="small muted">Income · ${monthName(m)}</div><b>${money(incM)}</b></div>
+      <div><div class="small muted">Spent · ${monthName(m)}</div><b>${money(spentM)}</b></div>
+    </div>
+    <div class="row between" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><b>Left this month</b><span class="amt">${money(incM-spentM)}</span></div>
+  </section>
+  <section class="card stack">
+    <div class="row between"><b>Spending limits</b><button class="link" data-act="go" data-v="set">Edit</button></div>
+    ${limitBlock('Today',sumT(t,t),db.limits.daily)}
+    ${limitBlock('This week',sumT(wa,wb),db.limits.weekly)}
+    ${limitBlock('This month',spentM,db.limits.monthly)}
+  </section>
+  <section class="card">
+    <div class="row between"><b>Recent expenses</b><button class="link" data-act="go" data-v="tx">See all</button></div>
+    ${recent.length?`<div style="margin-top:4px">${recent.map(txRow).join('')}</div>`:empty('🧾','No expenses yet','Open Expenses to add your first one.')}
+  </section>`;
+}
+
+function vTx(){
+  const noCats=!db.categories.length;
+  const quick=noCats?empty('🗂️','No categories yet','Add one in Categories first.'):`
+    <form data-form="quick" class="stack">
+      <div class="grid2">
+        <label class="field">Amount (${esc(db.currency)})<input name="amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" required></label>
+        <label class="field">Date<input name="date" type="date" value="${todayStr()}" required></label>
+      </div>
+      <label class="field">Category<select name="cat">${catOptions(db.categories[0].id)}</select></label>
+      <label class="field">Note<input name="note" maxlength="80" placeholder="What was it for?"></label>
+      <button class="btn block">Add expense</button>
+    </form>`;
+  const sorted=db.txns.slice().sort(byDateDesc);
+  let list='',last=null;
+  sorted.forEach(t=>{
+    if(t.date!==last){last=t.date;list+=`<div class="dayhead"><span>${niceDate(t.date)}</span><span>${money(sumT(t.date,t.date))}</span></div>`}
+    list+=txRow(t);
+  });
+  return `
+  <section class="card"><b>Quick add</b><div style="height:10px"></div>${quick}</section>
+  <section class="card">
+    <div class="row between"><b>All expenses</b><span class="small muted">${sorted.length} entries</span></div>
+    ${sorted.length?`<div style="margin-top:4px">${list}</div>`:empty('🧾','Nothing logged yet','Each expense you add appears here, grouped by day.')}
+  </section>`;
+}
+
+function txForm(t,date){
+  const v=t||{amount:'',categoryId:db.categories[0]?.id,date:date||todayStr(),note:''};
+  return `<form data-form="tx" data-id="${t?t.id:''}" class="stack">
+    <label class="field">Amount (${esc(db.currency)})<input name="amount" type="number" inputmode="decimal" step="0.01" min="0" value="${t?t.amount:''}" required></label>
+    <label class="field">Category<select name="cat">${catOptions(v.categoryId)}</select></label>
+    <label class="field">Date<input name="date" type="date" value="${v.date}" required></label>
+    <label class="field">Note<input name="note" maxlength="80" value="${esc(v.note)}" placeholder="Optional"></label>
+    <div class="row end"><button type="button" class="btn ghost" data-act="close">Cancel</button><button class="btn">${t?'Save changes':'Add expense'}</button></div>
+  </form>`;
+}
+
+function vCal(){
+  const m=ui.calMonth,[y,mo]=m.split('-').map(Number),lead=(new Date(y,mo-1,1).getDay()+6)%7,days=new Date(y,mo,0).getDate();
+  const s=ui.selDate,t=todayStr();
+  let cells=['M','T','W','T','F','S','S'].map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<lead;i++)cells+='<div></div>';
+  for(let d=1;d<=days;d++){
+    const ds=`${m}-${pad(d)}`,tot=sumT(ds,ds);
+    cells+=`<button class="${ds===s?'sel':''} ${ds===t?'today':''}" data-act="selday" data-s="${ds}"><b>${d}</b><small>${tot?compact(tot):''}</small></button>`;
+  }
+  const [wa,wb]=weekRange(s),[ma,mb]=monthRange(monthOf(s));
+  const dayT=db.txns.filter(x=>x.date===s).sort((a,b)=>b.amount-a.amount);
+  const cats=catTotals(s,s),dayTot=sumT(s,s);
+  return `
+  <section class="card">
+    <div class="nav-arrows"><button class="icon-btn" data-act="calnav" data-d="-1" aria-label="Previous month">‹</button><b>${monthName(m)}</b><button class="icon-btn" data-act="calnav" data-d="1" aria-label="Next month">›</button></div>
+    <div class="cal">${cells}</div>
+  </section>
+  <section class="card">
+    <div class="row between">
+      <div class="grow"><div class="small muted">Selected day</div><b style="font-size:17px">${niceDate(s)}</b></div>
+      <button class="btn" data-act="addDayTx">+ Add</button>
+    </div>
+    ${cats.length?`<div style="margin-top:8px">${cats.map(x=>`<div class="li"><div class="ico" style="background:${catColor(x.id)}">${esc(x.c.icon)}</div><div class="meta"><b>${esc(x.c.name)}</b></div><span class="amt">${money(x.v)}</span></div>`).join('')}</div>
+      <div class="row between" style="border-top:1px solid var(--line);padding-top:12px;margin-top:4px"><b>Daily total</b><span class="amt" style="font-size:18px">${money(dayTot)}</span></div>`
+      :empty('🌤️','Nothing spent this day','Tap + Add to log an expense for this date.')}
+  </section>
+  <section class="card stack">
+    <div class="row between"><span class="muted">Week total</span><b>${money(sumT(wa,wb))}</b></div>
+    <div class="row between"><span class="muted">Month total</span><b>${money(sumT(ma,mb))}</b></div>
+  </section>
+  ${dayT.length?`<section class="card"><b>Entries</b><div style="margin-top:4px">${dayT.map(txRow).join('')}</div></section>`:''}`;
+}
+
+function catForm(c){
+  const sel=c?c.icon:'🍔';
+  return `<h3>${c?'Edit category':'New category'}</h3>
+  <form data-form="cat" data-id="${c?c.id:''}" class="stack">
+    <label class="field">Name<input name="name" maxlength="30" required value="${esc(c?c.name:'')}" placeholder="e.g. Coffee"></label>
+    <div class="field">Icon<div class="iconpick">${ICONS.map(i=>`<button type="button" class="ic ${i===sel?'on':''}" data-act="pickicon" data-icon="${i}">${i}</button>`).join('')}</div></div>
+    <input name="custom" maxlength="4" placeholder="Or type any emoji">
+    <input type="hidden" name="icon" value="${esc(sel)}">
+    <label class="field">Monthly budget (optional, ${esc(db.currency)})<input name="budget" type="number" step="0.01" min="0" value="${c&&c.budget?c.budget:''}" placeholder="0"></label>
+    <div class="row end"><button type="button" class="btn ghost" data-act="close">Cancel</button><button class="btn">${c?'Save':'Create'}</button></div>
+  </form>`;
+}
+
+function vCats(){
+  const[a,b]=monthRange(monthOf(todayStr()));
+  const rows=db.categories.map(c=>{
+    const sp=catSpent(c.id,a,b);
+    return `<div class="li">
+      <div class="ico" style="background:${catColor(c.id)}">${esc(c.icon)}</div>
+      <div class="meta"><b>${esc(c.name)}</b><span class="small muted">${c.budget>0?'Budget '+money(c.budget)+' / month':'No monthly budget'}</span>
+        ${c.budget>0?`<div class="bar" style="height:6px;margin:6px 0 0"><i style="width:${Math.min(100,sp/c.budget*100).toFixed(1)}%;${sp>c.budget?'background:var(--danger)':''}"></i></div>`:''}</div>
+      <div style="text-align:right"><span class="amt">${money(sp)}</span><div class="small muted">this month</div></div>
+      <button class="icon-btn" data-act="editCat" data-id="${c.id}" aria-label="Edit">✏️</button>
+      <button class="icon-btn" data-act="delCat" data-id="${c.id}" aria-label="Delete">🗑️</button>
+    </div>`;
+  }).join('');
+  return `
+  <div class="row between" style="margin-bottom:12px"><span class="small muted">${db.categories.length} categories</span><button class="btn" data-act="newCat">+ New category</button></div>
+  <section class="card">${db.categories.length?rows:empty('🗂️','No categories','Create one to start grouping expenses.')}</section>`;
+}
+
+function vAn(){
+  const m=ui.anMonth,[a,b]=monthRange(m);
+  const sp=sumT(a,b),inc=sumI(a,b),cats=catTotals(a,b),t=todayStr();
+  const days=[...Array(7)].map((_,i)=>{const ds=addDays(t,i-6);return{tag:parseYmd(ds).toLocaleDateString('en-US',{weekday:'narrow'}),label:niceDate(ds),v:sumT(ds,ds)}});
+  let acc=0;
+  const stops=cats.map(x=>{const st=acc,en=acc+x.v/sp*100;acc=en;return `${catColor(x.id)} ${st.toFixed(2)}% ${en.toFixed(2)}%`}).join(',');
+  const breakdown=cats.map(x=>{const pct=sp?x.v/sp*100:0;const budget=x.c.budget>0?` · of ${money(x.c.budget)} budget`:'';
+    return `<div style="margin-top:12px"><div class="row between"><span class="grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.c.icon)} ${esc(x.c.name)}</span><span class="amt">${money(x.v)} <span class="muted small">${pct.toFixed(1)}%</span></span></div>
+      <div class="bar" style="margin:6px 0 0"><i style="width:${pct.toFixed(1)}%;background:${catColor(x.id)}"></i></div><div class="small muted">${budget}</div></div>`}).join('');
+  return `
+  <section class="card">
+    <div class="nav-arrows"><button class="icon-btn" data-act="annav" data-d="-1" aria-label="Previous month">‹</button><b>${monthName(m)}</b><button class="icon-btn" data-act="annav" data-d="1" aria-label="Next month">›</button></div>
+    <div class="grid2" style="margin-top:14px"><div><div class="small muted">Income</div><b>${money(inc)}</b></div><div><div class="small muted">Spent</div><b>${money(sp)}</b></div></div>
+    <div class="row between" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><b>Left over</b><span class="amt" style="font-size:18px">${money(inc-sp)}</span></div>
+  </section>
+  <section class="card"><b>Where the money went</b>
+    ${sp?`<div class="row" style="gap:18px;margin-top:14px"><div class="donut" style="background:conic-gradient(${stops})"></div>
+      <div class="grow stack" style="gap:6px">${cats.slice(0,6).map(x=>`<div class="row small"><span style="width:10px;height:10px;border-radius:3px;background:${catColor(x.id)};flex:0 0 auto"></span><span class="grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.c.name)}</span><b>${(x.v/sp*100).toFixed(0)}%</b></div>`).join('')}</div></div>
+      ${breakdown}`:empty('📊','No spending this month','Expenses for this month will show here.')}
+  </section>
+  <section class="card"><b>By week</b>${monthWeeks(m).some(w=>w.v)?bars(monthWeeks(m)):empty('📅','No weekly spending yet','')}</section>
+  <section class="card"><b>Last 7 days</b>${bars(days)}</section>`;
+}
+
+function histDetail(m){
+  const[a,b]=monthRange(m),sp=sumT(a,b),inc=sumI(a,b),left=r2(inc-sp),cats=catTotals(a,b),weeks=monthWeeks(m),list=txnsIn(a,b).sort(byDateDesc);
+  return `
+  <button class="btn ghost" data-act="histBack" style="margin-bottom:14px">← All months</button>
+  <section class="card">
+    <div class="small muted">Monthly record</div>
+    <h3 style="font-size:20px;margin-bottom:12px">${monthName(m)}</h3>
+    <div class="grid2"><div><div class="small muted">Income</div><b>${money(inc)}</b></div><div><div class="small muted">Spent</div><b>${money(sp)}</b></div></div>
+    <div class="row between" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><b>Left over</b><span class="amt" style="font-size:20px;${left<0?'color:var(--danger)':''}">${money(left)}</span></div>
+    ${limitBlock('Monthly budget',sp,db.limits.monthly)}
+  </section>
+  <section class="card"><b>Categories</b>
+    ${cats.length?cats.map(x=>`<div class="li"><div class="ico" style="background:${catColor(x.id)}">${esc(x.c.icon)}</div><div class="meta"><b>${esc(x.c.name)}</b><span class="small muted">${(x.v/sp*100).toFixed(1)}% of spending</span></div><span class="amt">${money(x.v)}</span></div>`).join(''):empty('🗃️','Nothing spent','This month has no expenses.')}
+  </section>
+  <section class="card"><b>Weekly records</b>
+    ${weeks.some(w=>w.v)?weeks.map(w=>`<div class="li"><div class="ico" style="background:var(--soft);font-size:12px;font-weight:800">${w.tag}</div><div class="meta"><b>${w.label}</b></div><span class="amt">${money(w.v)}</span></div>`).join(''):empty('📅','No weekly records','')}
+  </section>
+  <section class="card"><b>Expenses</b>${list.length?`<div style="margin-top:4px">${list.map(txRow).join('')}</div>`:empty('🧾','No expenses','')}</section>`;
+}
+
+function vHist(){
+  if(ui.histMonth)return histDetail(ui.histMonth);
+  const rows=allMonths().map(m=>{const[a,b]=monthRange(m),sp=sumT(a,b),inc=sumI(a,b),left=r2(inc-sp);
+    return `<button class="hrow" data-act="histOpen" data-m="${m}"><div class="ico" style="background:var(--soft)">🗓️</div>
+      <div class="meta"><b>${monthName(m)}</b><span class="small muted">Income ${money(inc)} · Spent ${money(sp)}</span></div>
+      <div style="text-align:right"><div class="small muted">Left</div><span class="amt" style="${left<0?'color:var(--danger)':''}">${money(left)}</span></div></button>`}).join('');
+  return `<section class="card"><div class="small muted" style="margin-bottom:4px">Tap a month to see its categories, weeks, and expenses. Every month you record stays saved.</div>${rows}</section>`;
+}
+
+function vSet(){
+  const incomes=db.incomes.slice().sort(byDateDesc);
+  return `
+  <form data-form="settings" class="card stack">
+    <b>Preferences</b>
+    <div class="grid2">
+      <label class="field">Currency symbol<input name="currency" maxlength="4" value="${esc(db.currency)}"></label>
+      <label class="field">Starting balance<input name="start" type="number" step="0.01" value="${db.startBalance||''}" placeholder="0"></label>
+    </div>
+    <b style="margin-top:4px">Spending limits</b>
+    <div class="grid2">
+      <label class="field">Daily<input name="daily" type="number" step="0.01" min="0" value="${db.limits.daily||''}" placeholder="0"></label>
+      <label class="field">Weekly<input name="weekly" type="number" step="0.01" min="0" value="${db.limits.weekly||''}" placeholder="0"></label>
+    </div>
+    <label class="field">Monthly budget<input name="monthly" type="number" step="0.01" min="0" value="${db.limits.monthly||''}" placeholder="0"></label>
+    <button class="btn block">Save settings</button>
+  </form>
+
+  <section class="card">
+    <b>Income</b>
+    <form data-form="income" class="stack" style="margin:12px 0">
+      <div class="grid2">
+        <label class="field">Amount (${esc(db.currency)})<input name="amount" type="number" inputmode="decimal" step="0.01" min="0" required></label>
+        <label class="field">Date<input name="date" type="date" value="${todayStr()}" required></label>
+      </div>
+      <label class="field">Note<input name="note" maxlength="80" placeholder="e.g. Salary"></label>
+      <button class="btn block">Record income</button>
+    </form>
+    ${incomes.length?incomes.map(i=>`<div class="li"><div class="ico" style="background:var(--soft)">💵</div><div class="meta"><b>${esc(i.note||'Income')}</b><span class="small muted">${niceDate(i.date)}</span></div><span class="amt">${money(i.amount)}</span><button class="icon-btn" data-act="delInc" data-id="${i.id}" aria-label="Delete">🗑️</button></div>`).join(''):empty('💵','No income recorded','Add your salary or other income here.')}
+  </section>
+
+  <section class="card stack">
+    <b>Backup & restore</b>
+    <p class="small muted" style="margin:0">Copy your data as text and keep it somewhere safe. Paste it back here to restore.</p>
+    <button type="button" class="btn ghost block" data-act="backup">Create backup text</button>
+    <textarea id="bk" rows="4" readonly placeholder="Backup text appears here"></textarea>
+    <button type="button" class="btn ghost block" data-act="copyBackup">Copy backup text</button>
+    <label class="field">Or choose a backup file<input type="file" accept="application/json,.json" data-file></label>
+    <textarea id="rs" rows="3" placeholder="Paste backup text to restore"></textarea>
+    <button type="button" class="btn block" data-act="restore">Restore from pasted text</button>
+  </section>
+
+  <section class="card stack">
+    <b>Danger zone</b>
+    <button type="button" class="btn danger block" data-act="wipe">Erase all data</button>
+  </section>`;
+}
+
+/* ---------- shell ---------- */
+function render(){
+  const v=ui.view;
+  const views={home:vHome,tx:vTx,cal:vCal,cats:vCats,an:vAn,hist:vHist,set:vSet};
+  const label=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('app').innerHTML=`
+    <header class="top"><div class="small muted">${label}</div><h1>${TITLES[v]}</h1></header>
+    <main>${views[v]()}</main>
+    <nav>${VIEWS.map(([k,i,l])=>`<button data-act="go" data-v="${k}" class="${k===v?'on':''}" aria-current="${k===v}"><span>${i}</span>${l}</button>`).join('')}</nav>`;
+}
+function saveRender(msg){save();render();if(msg)toast(msg)}
+let toastT;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},2200)}
+function modal(html){closeModal();const s=document.createElement('div');s.className='scrim';s.id='scrim';s.innerHTML=`<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;s.addEventListener('click',e=>{if(e.target===s)closeModal()});document.body.appendChild(s)}
+function closeModal(){document.getElementById('scrim')?.remove()}
+let pendingYes=null;
+function confirmBox(msg,label,onYes){pendingYes=onYes;modal(`<h3>Please confirm</h3><p class="muted" style="margin:0 0 16px">${esc(msg)}</p><div class="row end"><button class="btn ghost" data-act="close">Cancel</button><button class="btn danger" data-act="confirmYes">${esc(label)}</button></div>`)}
+
+/* ---------- actions (buttons) ---------- */
+const A={
+  go:d=>{ui.view=d.v;render();window.scrollTo(0,0)},
+  close:()=>{pendingYes=null;closeModal()},
+  confirmYes:()=>{const fn=pendingYes;pendingYes=null;closeModal();fn&&fn()},
+  edit:d=>{const t=db.txns.find(x=>x.id===d.id);if(t)modal(`<h3>Edit expense</h3>${txForm(t)}`)},
+  del:d=>{const t=db.txns.find(x=>x.id===d.id);if(!t)return;confirmBox(`Delete this ${money(t.amount)} expense? This cannot be undone.`,'Delete',()=>{db.txns=db.txns.filter(x=>x.id!==d.id);saveRender('Expense deleted')})},
+  addDayTx:()=>{if(!db.categories.length){toast('Add a category first');return}modal(`<h3>New expense</h3>${txForm(null,ui.selDate)}`)},
+  selday:d=>{ui.selDate=d.s;ui.calMonth=monthOf(d.s);render()},
+  calnav:d=>{ui.calMonth=shiftMonth(ui.calMonth,+d.d);render()},
+  annav:d=>{ui.anMonth=shiftMonth(ui.anMonth,+d.d);render()},
+  newCat:()=>modal(catForm(null)),
+  editCat:d=>{const c=db.categories.find(x=>x.id===d.id);if(c)modal(catForm(c))},
+  delCat:d=>{const c=catById(d.id),n=db.txns.filter(t=>t.categoryId===d.id).length;
+    confirmBox(`Delete "${c.name}"${n?` and its ${n} expense${n>1?'s':''}`:''}?`,'Delete',()=>{db.categories=db.categories.filter(x=>x.id!==d.id);db.txns=db.txns.filter(t=>t.categoryId!==d.id);saveRender('Category deleted')})},
+  pickicon:(d,el)=>{const form=el.closest('form');form.elements.icon.value=d.icon;form.elements.custom.value='';el.closest('.iconpick').querySelectorAll('.ic').forEach(b=>b.classList.toggle('on',b===el))},
+  delInc:d=>{const i=db.incomes.find(x=>x.id===d.id);if(!i)return;confirmBox(`Delete this ${money(i.amount)} income record?`,'Delete',()=>{db.incomes=db.incomes.filter(x=>x.id!==d.id);saveRender('Income deleted')})},
+  histOpen:d=>{ui.histMonth=d.m;render();window.scrollTo(0,0)},
+  histBack:()=>{ui.histMonth=null;render()},
+  backup:()=>{const ta=document.getElementById('bk');if(ta)ta.value=JSON.stringify(db,null,2)},
+  copyBackup:()=>{const ta=document.getElementById('bk');if(!ta||!ta.value){toast('Create the backup text first');return}
+    const fail=()=>{ta.select();toast('Select the text and copy it')};
+    try{navigator.clipboard.writeText(ta.value).then(()=>toast('Backup copied'),fail)}catch(e){fail()}},
+  restore:()=>{const txt=(document.getElementById('rs')?.value||'').trim();if(!txt){toast('Paste backup text first');return}restoreText(txt)},
+  wipe:()=>confirmBox('This erases every expense, category, and income on this device. Copy a backup first if you need one.','Erase all',()=>{db=defaults();saveRender('All data erased')})
+};
+
+function restoreText(text){
+  let obj;
+  try{obj=JSON.parse(text)}catch(e){toast('That is not valid backup text');return}
+  if(!obj||typeof obj!=='object'||!Array.isArray(obj.categories)||!Array.isArray(obj.txns)){toast('This does not look like a backup');return}
+  confirmBox('This replaces everything on this device with the backup. Continue?','Restore',()=>{db=Object.assign(defaults(),obj);saveRender('Backup restored')});
+}
+
+/* ---------- forms ---------- */
+const forms={
+  quick:(fd)=>{
+    const amount=readAmount(fd.get('amount'));
+    if(!amount){toast('Enter an amount above 0');return}
+    db.txns.push({id:uid(),amount,categoryId:fd.get('cat'),date:fd.get('date')||todayStr(),note:String(fd.get('note')||'').trim()});
+    saveRender('Expense added');
+  },
+  tx:(fd,f)=>{
+    const amount=readAmount(fd.get('amount'));
+    if(!amount){toast('Enter an amount above 0');return}
+    const data={amount,categoryId:fd.get('cat'),date:fd.get('date')||todayStr(),note:String(fd.get('note')||'').trim()};
+    const id=f.dataset.id;
+    if(id){const t=db.txns.find(x=>x.id===id);if(t)Object.assign(t,data)}
+    else db.txns.push({id:uid(),...data});
+    closeModal();
+    saveRender(id?'Expense updated':'Expense added');
+  },
+  cat:(fd,f)=>{
+    const name=String(fd.get('name')||'').trim();
+    if(!name){toast('Name the category');return}
+    const icon=String(fd.get('custom')||'').trim()||fd.get('icon')||'🏷️';
+    const budget=Math.max(0,r2(fd.get('budget')));
+    const id=f.dataset.id;
+    if(id){const c=db.categories.find(x=>x.id===id);if(c)Object.assign(c,{name,icon,budget})}
+    else db.categories.push({id:uid(),name,icon,budget});
+    closeModal();
+    saveRender(id?'Category updated':'Category created');
+  },
+  income:(fd,f)=>{
+    const amount=readAmount(fd.get('amount'));
+    if(!amount){toast('Enter an amount above 0');return}
+    db.incomes.push({id:uid(),amount,date:fd.get('date')||todayStr(),note:String(fd.get('note')||'').trim()});
+    f.reset();
+    saveRender('Income recorded');
+  },
+  settings:(fd)=>{
+    db.currency=String(fd.get('currency')||'').trim().slice(0,4)||'₱';
+    const start=parseFloat(fd.get('start'));
+    db.startBalance=isFinite(start)?r2(start):0;
+    db.limits={daily:Math.max(0,r2(fd.get('daily'))),weekly:Math.max(0,r2(fd.get('weekly'))),monthly:Math.max(0,r2(fd.get('monthly')))};
+    saveRender('Settings saved');
+  }
+};
+
+/* ---------- wiring ---------- */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');
+  if(!el)return;
+  const fn=A[el.dataset.act];
+  if(fn){e.preventDefault();fn(el.dataset,el)}
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();
+  const f=e.target,fn=forms[f.dataset.form];
+  if(fn)fn(new FormData(f),f);
+});
+document.addEventListener('change',e=>{
+  const f=e.target;
+  if(f.matches('[data-file]')&&f.files&&f.files[0]){
+    const r=new FileReader();
+    r.onload=()=>restoreText(String(r.result));
+    r.readAsText(f.files[0]);
+    f.value='';
+  }
+});
+render();
+</script>
+
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((err) => {
+      console.warn("Offline support could not be enabled:", err);
+    });
+  });
+}
+</script>
+</body></html>
